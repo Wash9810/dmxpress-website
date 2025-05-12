@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard | DM Xpress</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 2em; }
+    .section { border: 1px solid #ccc; border-radius: 10px; padding: 1em; margin-bottom: 2em; max-width: 600px; margin-left: auto; margin-right: auto; }
+    input, button { padding: 10px; width: 80%; margin: 10px 0; }
+    h2 { color: orange; }
+  </style>
+</head>
+<body>
+  <h1>📦 Admin Dashboard</h1>
+
+  <div class="section">
+    <h2>🔗 Quick Access</h2>
+    <a href="admin.html"><button>Update Package Status</button></a><br>
+    <a href="create-admin.html"><button>Create New Admin</button></a>
+  </div>
+
+  <div class="section">
+    <h2>📋 Assign Task to Staff</h2>
+    <form id="taskForm">
+      <input type="text" id="staffName" placeholder="Staff Name" required><br>
+      <input type="text" id="taskDesc" placeholder="Task Description" required><br>
+      <button type="submit">Assign Task</button>
+    </form>
+    <p id="taskStatus"></p>
+  </div>
+
+  <div class="section">
+    <h2>📦 Package Pickup & Delivery</h2>
+    
+    <form id="pickupForm">
+      <input type="text" id="pickupCodeTrack" placeholder="Enter Tracking Code" required><br>
+      <input type="text" id="pickupCodeInput" placeholder="Enter Pickup Code" required><br>
+      <button type="submit">Mark as Picked Up</button>
+    </form>
+
+      <input type="text" id="pickupCode" placeholder="Enter Tracking Code" required><br>
+      <button type="submit">Mark as Picked Up</button>
+    </form>
+
+    <form id="deliveryForm">
+      <input type="text" id="deliveryCode" placeholder="Enter Tracking Code" required><br>
+      <input type="text" id="confirmCode" placeholder="Enter Delivery Code" required><br>
+      <button type="submit">Confirm Delivery</button>
+    </form>
+    <p id="packageStatus"></p>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js">
+    // Load all tasks
+    db.collection("tasks").orderBy("assignedAt", "desc").get().then(snapshot => {
+      let table = "<tr><th>Staff</th><th>Task</th><th>Assigned At</th></tr>";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        table += `<tr><td>${data.staff}</td><td>${data.description}</td><td>${data.assignedAt.toDate().toLocaleString()}</td></tr>`;
+      });
+      document.getElementById("tasksTable").innerHTML = table;
+    });
+
+    // Load all packages
+    db.collection("packages").orderBy("createdAt", "desc").get().then(snapshot => {
+      let table = "<tr><th>Tracking</th><th>Customer</th><th>Phone</th><th>Picked Up</th><th>Delivered</th><th>Created</th></tr>";
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        table += `<tr>
+          <td>${d.trackingCode || ""}</td>
+          <td>${d.description || ""}</td>
+          <td>${d.phone || ""}</td>
+          <td>${d.pickedUp ? "✅" : "❌"}</td>
+          <td>${d.delivered ? "✅" : "❌"}</td>
+          <td>${d.createdAt.toDate().toLocaleString()}</td>
+        </tr>`;
+      });
+      document.getElementById("packagesTable").innerHTML = table;
+    });
+
+</script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js">
+    // Load all tasks
+    db.collection("tasks").orderBy("assignedAt", "desc").get().then(snapshot => {
+      let table = "<tr><th>Staff</th><th>Task</th><th>Assigned At</th></tr>";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        table += `<tr><td>${data.staff}</td><td>${data.description}</td><td>${data.assignedAt.toDate().toLocaleString()}</td></tr>`;
+      });
+      document.getElementById("tasksTable").innerHTML = table;
+    });
+
+    // Load all packages
+    db.collection("packages").orderBy("createdAt", "desc").get().then(snapshot => {
+      let table = "<tr><th>Tracking</th><th>Customer</th><th>Phone</th><th>Picked Up</th><th>Delivered</th><th>Created</th></tr>";
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        table += `<tr>
+          <td>${d.trackingCode || ""}</td>
+          <td>${d.description || ""}</td>
+          <td>${d.phone || ""}</td>
+          <td>${d.pickedUp ? "✅" : "❌"}</td>
+          <td>${d.delivered ? "✅" : "❌"}</td>
+          <td>${d.createdAt.toDate().toLocaleString()}</td>
+        </tr>`;
+      });
+      document.getElementById("packagesTable").innerHTML = table;
+    });
+
+</script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDi-eKOhhM0iBztwH-lk6xB8G_wCJIANxI",
+      authDomain: "dm-xpress-1f835.firebaseapp.com",
+      projectId: "dm-xpress-1f835",
+      storageBucket: "dm-xpress-1f835.firebasestorage.app",
+      messagingSenderId: "27426777557",
+      appId: "1:27426777557:web:9b89da634b89ee6e55755c",
+      measurementId: "G-VPBTR5RZ32"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Assign task
+    document.getElementById("taskForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const name = document.getElementById("staffName").value.trim();
+      const desc = document.getElementById("taskDesc").value.trim();
+      db.collection("tasks").add({
+        staff: name,
+        description: desc,
+        assignedAt: firebase.firestore.Timestamp.now()
+      }).then(() => {
+        document.getElementById("taskStatus").innerText = "✅ Task assigned!";
+      }).catch(err => {
+        document.getElementById("taskStatus").innerText = "❌ Error: " + err.message;
+      });
+    });
+
+    // Mark as picked up with code
+    document.getElementById("pickupForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const code = document.getElementById("pickupCode").value.trim();
+      // Mark as picked up with code
+    document.getElementById("pickupForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const code = document.getElementById("pickupCodeTrack").value.trim();
+      const pickupCode = document.getElementById("pickupCodeInput").value.trim();
+
+      db.collection("packages").where("trackingCode", "==", code).get()
+        .then(snapshot => {
+          if (!snapshot.empty) {
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              if (data.pickupCode === pickupCode) {
+                db.collection("packages").doc(doc.id).update({
+                  pickedUp: true,
+                  pickedUpAt: firebase.firestore.Timestamp.now()
+                });
+                document.getElementById("packageStatus").innerText = "✅ Package marked as picked up.";
+              } else {
+                document.getElementById("packageStatus").innerText = "❌ Incorrect pickup code.";
+              }
+            });
+          } else {
+            document.getElementById("packageStatus").innerText = "❌ Tracking code not found.";
+          }
+        });
+    });
+          if (!snapshot.empty) {
+            snapshot.forEach(doc => {
+              db.collection("packages").doc(doc.id).update({
+                pickedUp: true
+              });
+            });
+            document.getElementById("packageStatus").innerText = "✅ Package marked as picked up.";
+          } else {
+            document.getElementById("packageStatus").innerText = "❌ Tracking code not found.";
+          }
+        });
+    });
+
+    // Confirm delivery
+    document.getElementById("deliveryForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const code = document.getElementById("deliveryCode").value.trim();
+      const confirmCode = document.getElementById("confirmCode").value.trim();
+      // Mark as picked up with code
+    document.getElementById("pickupForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const code = document.getElementById("pickupCodeTrack").value.trim();
+      const pickupCode = document.getElementById("pickupCodeInput").value.trim();
+
+      db.collection("packages").where("trackingCode", "==", code).get()
+        .then(snapshot => {
+          if (!snapshot.empty) {
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              if (data.pickupCode === pickupCode) {
+                db.collection("packages").doc(doc.id).update({
+                  pickedUp: true,
+                  pickedUpAt: firebase.firestore.Timestamp.now()
+                });
+                document.getElementById("packageStatus").innerText = "✅ Package marked as picked up.";
+              } else {
+                document.getElementById("packageStatus").innerText = "❌ Incorrect pickup code.";
+              }
+            });
+          } else {
+            document.getElementById("packageStatus").innerText = "❌ Tracking code not found.";
+          }
+        });
+    });
+          if (!snapshot.empty) {
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              if (data.deliveryCode === confirmCode) {
+                db.collection("packages").doc(doc.id).update({
+                  delivered: true,
+                  deliveredAt: firebase.firestore.Timestamp.now()
+                });
+                document.getElementById("packageStatus").innerText = "✅ Package marked as delivered.";
+              } else {
+                document.getElementById("packageStatus").innerText = "❌ Incorrect delivery code.";
+              }
+            });
+          } else {
+            document.getElementById("packageStatus").innerText = "❌ Tracking code not found.";
+          }
+        });
+    });
+  
+    // Load all tasks
+    db.collection("tasks").orderBy("assignedAt", "desc").get().then(snapshot => {
+      let table = "<tr><th>Staff</th><th>Task</th><th>Assigned At</th></tr>";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        table += `<tr><td>${data.staff}</td><td>${data.description}</td><td>${data.assignedAt.toDate().toLocaleString()}</td></tr>`;
+      });
+      document.getElementById("tasksTable").innerHTML = table;
+    });
+
+    // Load all packages
+    db.collection("packages").orderBy("createdAt", "desc").get().then(snapshot => {
+      let table = "<tr><th>Tracking</th><th>Customer</th><th>Phone</th><th>Picked Up</th><th>Delivered</th><th>Created</th></tr>";
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        table += `<tr>
+          <td>${d.trackingCode || ""}</td>
+          <td>${d.description || ""}</td>
+          <td>${d.phone || ""}</td>
+          <td>${d.pickedUp ? "✅" : "❌"}</td>
+          <td>${d.delivered ? "✅" : "❌"}</td>
+          <td>${d.createdAt.toDate().toLocaleString()}</td>
+        </tr>`;
+      });
+      document.getElementById("packagesTable").innerHTML = table;
+    });
+
+
+    const today = new Date();
+    const weekAgo = new Date();
+    weekAgo.setDate(today.getDate() - 6);
+
+    const dayLabels = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(weekAgo);
+      d.setDate(d.getDate() + i);
+      return d.toLocaleDateString('en-US', { weekday: 'short' });
+    });
+
+    const packageCounts = Array(7).fill(0);
+    const revenueData = Array(7).fill(0);
+    let pickedUp = 0;
+    let delivered = 0;
+
+    db.collection("packages")
+      .where("createdAt", ">=", firebase.firestore.Timestamp.fromDate(weekAgo))
+      .get()
+      .then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const date = data.createdAt.toDate();
+          const index = Math.floor((date - weekAgo) / (1000 * 60 * 60 * 24));
+          if (index >= 0 && index < 7) {
+            packageCounts[index]++;
+            revenueData[index] += data.total || 0;
+          }
+          if (data.pickedUp) pickedUp++;
+          if (data.delivered) delivered++;
+        });
+
+        new Chart(document.getElementById("barChart"), {
+          type: "bar",
+          data: {
+            labels: dayLabels,
+            datasets: [{
+              label: "Packages",
+              data: packageCounts,
+              backgroundColor: "#FFA500"
+            }]
+          }
+        });
+
+        new Chart(document.getElementById("pieChart"), {
+          type: "pie",
+          data: {
+            labels: ["Picked Up", "Delivered"],
+            datasets: [{
+              data: [pickedUp, delivered],
+              backgroundColor: ["#36A2EB", "#4CAF50"]
+            }]
+          }
+        });
+
+        new Chart(document.getElementById("lineChart"), {
+          type: "line",
+          data: {
+            labels: dayLabels,
+            datasets: [{
+              label: "Revenue ($)",
+              data: revenueData,
+              borderColor: "#28a745",
+              backgroundColor: "rgba(40, 167, 69, 0.2)",
+              fill: true
+            }]
+          }
+        });
+      });
+
+</script>
+
+  <div class="section">
+    <h2>📋 View All Tasks</h2>
+    <table id="tasksTable" border="1" style="margin:auto; width:90%; text-align:left;"></table>
+    <h2>📦 View All Packages</h2>
+    <table id="packagesTable" border="1" style="margin:auto; width:90%; text-align:left;"></table>
+  </div>
+
+
+  <div class="section">
+    <h2>📊 Analytics</h2>
+  <div style="margin-bottom: 1em;">
+    <label for="monthSelect">📆 Month:</label>
+    <select id="monthSelect"></select>
+    <label for="yearSelect">Year:</label>
+    <select id="yearSelect"></select>
+    <button onclick="filterByMonth()">Filter</button>
+    <button onclick="exportToPDF()">📄 Export to PDF</button>
+  </div>
+
+    <canvas id="barChart" height="200"></canvas>
+    <canvas id="pieChart" height="200" style="margin-top:2em;"></canvas>
+    <canvas id="lineChart" height="200" style="margin-top:2em;"></canvas>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <script>
+    const monthSelect = document.getElementById("monthSelect");
+    const yearSelect = document.getElementById("yearSelect");
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    for (let m = 0; m < 12; m++) {
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.text = new Date(0, m).toLocaleString("default", { month: "long" });
+      if (m === now.getMonth()) opt.selected = true;
+      monthSelect.appendChild(opt);
+    }
+
+    for (let y = currentYear - 5; y <= currentYear; y++) {
+      const opt = document.createElement("option");
+      opt.value = y;
+      opt.text = y;
+      if (y === currentYear) opt.selected = true;
+      yearSelect.appendChild(opt);
+    }
+
+    let barChart, pieChart, lineChart;
+
+    function filterByMonth() {
+      const month = parseInt(monthSelect.value);
+      const year = parseInt(yearSelect.value);
+      const start = new Date(year, month, 1);
+      const end = new Date(year, month + 1, 1);
+
+      const dayLabels = [];
+      const packageCounts = [];
+      const revenueData = [];
+      const dayMap = {};
+
+      for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+        const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        dayLabels.push(label);
+        dayMap[label] = { count: 0, revenue: 0 };
+      }
+
+      let pickedUp = 0, delivered = 0;
+
+      db.collection("packages")
+        .where("createdAt", ">=", firebase.firestore.Timestamp.fromDate(start))
+        .where("createdAt", "<", firebase.firestore.Timestamp.fromDate(end))
+        .get()
+        .then(snapshot => {
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const d = data.createdAt.toDate();
+            const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            if (dayMap[label]) {
+              dayMap[label].count++;
+              dayMap[label].revenue += data.total || 0;
+            }
+            if (data.pickedUp) pickedUp++;
+            if (data.delivered) delivered++;
+          });
+
+          packageCounts.length = 0;
+          revenueData.length = 0;
+          dayLabels.forEach(label => {
+            packageCounts.push(dayMap[label].count);
+            revenueData.push(dayMap[label].revenue);
+          });
+
+          if (barChart) barChart.destroy();
+          if (pieChart) pieChart.destroy();
+          if (lineChart) lineChart.destroy();
+
+          barChart = new Chart(document.getElementById("barChart"), {
+            type: "bar",
+            data: {
+              labels: dayLabels,
+              datasets: [{ label: "Packages", data: packageCounts, backgroundColor: "#FFA500" }]
+            }
+          });
+
+          pieChart = new Chart(document.getElementById("pieChart"), {
+            type: "pie",
+            data: {
+              labels: ["Picked Up", "Delivered"],
+              datasets: [{ data: [pickedUp, delivered], backgroundColor: ["#36A2EB", "#4CAF50"] }]
+            }
+          });
+
+          lineChart = new Chart(document.getElementById("lineChart"), {
+            type: "line",
+            data: {
+              labels: dayLabels,
+              datasets: [{
+                label: "Revenue ($)",
+                data: revenueData,
+                borderColor: "#28a745",
+                backgroundColor: "rgba(40, 167, 69, 0.2)",
+                fill: true
+              }]
+            }
+          });
+        });
+    }
+
+    function exportToPDF() {
+      const element = document.querySelector(".section");
+      const opt = {
+        margin: 0.5,
+        filename: 'dmxpress-analytics.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      html2pdf().from(element).set(opt).save();
+    }
+
+    window.onload = filterByMonth;
+  </script>
+
+
+</body>
+</html>
