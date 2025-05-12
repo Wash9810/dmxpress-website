@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Analytics | DM Xpress</title>
+  <style>
+    body { font-family: sans-serif; background: #f4f4f4; padding: 2em; text-align: center; }
+    .card { background: white; padding: 1em; border-radius: 10px; box-shadow: 0 0 10px #ccc; margin: 1em auto; max-width: 600px; }
+    h2 { color: orange; }
+    canvas { margin-top: 1em; max-width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>📊 DM Xpress Admin Analytics</h1>
+
+  <div class="card">
+    <h2>Packages This Week</h2>
+    <canvas id="barChart"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Picked Up vs Delivered</h2>
+    <canvas id="pieChart"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Revenue Trend</h2>
+    <canvas id="lineChart"></canvas>
+  </div>
+
+  <!-- Firebase & Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDi-eKOhhM0iBztwH-lk6xB8G_wCJIANxI",
+      authDomain: "dm-xpress-1f835.firebaseapp.com",
+      projectId: "dm-xpress-1f835",
+      storageBucket: "dm-xpress-1f835.firebasestorage.app",
+      messagingSenderId: "27426777557",
+      appId: "1:27426777557:web:9b89da634b89ee6e55755c",
+      measurementId: "G-VPBTR5RZ32"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const today = new Date();
+    const weekAgo = new Date();
+    weekAgo.setDate(today.getDate() - 6);
+
+    const dayLabels = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(weekAgo);
+      d.setDate(d.getDate() + i);
+      return d.toLocaleDateString('en-US', { weekday: 'short' });
+    });
+
+    const packageCounts = Array(7).fill(0);
+    const revenueData = Array(7).fill(0);
+    let pickedUp = 0;
+    let delivered = 0;
+
+    db.collection("packages")
+      .where("createdAt", ">=", firebase.firestore.Timestamp.fromDate(weekAgo))
+      .get()
+      .then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const date = data.createdAt.toDate();
+          const index = Math.floor((date - weekAgo) / (1000 * 60 * 60 * 24));
+          if (index >= 0 && index < 7) {
+            packageCounts[index]++;
+            revenueData[index] += data.total || 0;
+          }
+          if (data.pickedUp) pickedUp++;
+          if (data.delivered) delivered++;
+        });
+
+        // Bar chart - Packages per day
+        new Chart(document.getElementById("barChart"), {
+          type: "bar",
+          data: {
+            labels: dayLabels,
+            datasets: [{
+              label: "Packages",
+              data: packageCounts,
+              backgroundColor: "#FFA500"
+            }]
+          }
+        });
+
+        // Pie chart - Picked Up vs Delivered
+        new Chart(document.getElementById("pieChart"), {
+          type: "pie",
+          data: {
+            labels: ["Picked Up", "Delivered"],
+            datasets: [{
+              data: [pickedUp, delivered],
+              backgroundColor: ["#36A2EB", "#4CAF50"]
+            }]
+          }
+        });
+
+        // Line chart - Revenue trend
+        new Chart(document.getElementById("lineChart"), {
+          type: "line",
+          data: {
+            labels: dayLabels,
+            datasets: [{
+              label: "Revenue ($)",
+              data: revenueData,
+              borderColor: "#28a745",
+              backgroundColor: "rgba(40, 167, 69, 0.2)",
+              fill: true
+            }]
+          }
+        });
+      });
+  </script>
+</body>
+</html>
