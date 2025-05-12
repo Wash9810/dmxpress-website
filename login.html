@@ -13,11 +13,12 @@
   </form>
   <p>Don't have an account? <a href="#">Register</a></p>
 
-  <!-- Firebase Scripts -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  <!-- Firebase App (CDN scripts) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
+  <script>
+    // Your Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDi-eKOhhM0iBztwH-lk6xB8G_wCJIANxI",
       authDomain: "dm-xpress-1f835.firebaseapp.com",
@@ -28,16 +29,18 @@
       measurementId: "G-VPBTR5RZ32"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
-    document.getElementById("loginForm").addEventListener("submit", function(e) {
+    // Handle login
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
       e.preventDefault();
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
 
-      signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
           alert("Login successful!");
           window.location.href = "hub.html";
         })
