@@ -23,16 +23,35 @@
 
   <div id="result" style="margin-top:2em; display:none;">
     <h3>✅ Payment Received!</h3>
-    <p><strong>Your Tracking Code:</strong> <span id="trackingCode">DMX9893920921</span></p>
+    <p><strong>Your Tracking Code:</strong> <span id="trackingCode">DMX2105526862</span></p>
     <div id="printArea">
       <img src="tracking_qr.png" alt="QR Code" width="200" height="200" />
-      <p style="font-weight:bold;">Tracking Code: DMX9893920921</p>
+      <p style="font-weight:bold;">Tracking Code: DMX2105526862</p>
     </div>
     <br>
     <button onclick="window.print()">🖨️ Print QR & Tracking Code</button>
   </div>
 
+  <!-- Firebase App & Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
   <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDi-eKOhhM0iBztwH-lk6xB8G_wCJIANxI",
+      authDomain: "dm-xpress-1f835.firebaseapp.com",
+      projectId: "dm-xpress-1f835",
+      storageBucket: "dm-xpress-1f835.firebasestorage.app",
+      messagingSenderId: "27426777557",
+      appId: "1:27426777557:web:9b89da634b89ee6e55755c",
+      measurementId: "G-VPBTR5RZ32"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let finalTotal = 0;
+
     function calculateCost() {
       const weight = parseFloat(document.getElementById("weight").value);
       if (isNaN(weight) || weight <= 0) {
@@ -40,24 +59,41 @@
         return;
       }
 
-      const baseRate = 5.0; // cost per lb
-      const fee = 3.0;      // service fee
-      const taxRate = 0.08; // tax rate
+      const baseRate = 5.0;
+      const fee = 3.0;
+      const taxRate = 0.08;
 
       const subtotal = weight * baseRate + fee;
       const tax = subtotal * taxRate;
-      const total = subtotal + tax;
+      finalTotal = subtotal + tax;
 
       document.getElementById("baseCost").innerText = "📦 Base Cost + Fee: $" + subtotal.toFixed(2);
       document.getElementById("tax").innerText = "🧾 Tax (8%): $" + tax.toFixed(2);
-      document.getElementById("total").innerText = "💳 Total Amount Due: $" + total.toFixed(2);
+      document.getElementById("total").innerText = "💳 Total Amount Due: $" + finalTotal.toFixed(2);
 
       document.getElementById("costDetails").style.display = "block";
     }
 
     function makePayment() {
-      document.getElementById("result").style.display = "block";
-      document.getElementById("costDetails").style.display = "none";
+      const desc = document.getElementById("desc").value;
+      const weight = parseFloat(document.getElementById("weight").value);
+      const dest = document.getElementById("dest").value;
+      const trackCode = document.getElementById("trackingCode").textContent;
+
+      db.collection("packages").add({
+        description: desc,
+        weight: weight,
+        destination: dest,
+        total: finalTotal,
+        trackingCode: trackCode,
+        createdAt: new Date()
+      }).then(() => {
+        alert("Package saved successfully!");
+        document.getElementById("result").style.display = "block";
+        document.getElementById("costDetails").style.display = "none";
+      }).catch((error) => {
+        alert("Error saving to Firebase: " + error.message);
+      });
     }
   </script>
 </body>
