@@ -1,21 +1,50 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login | DM Xpress</title>
+</head>
+<body style="font-family:sans-serif;text-align:center;padding:2em;">
+  <h2>🔐 Login to DM Xpress</h2>
+  <form id="loginForm">
+    <input type="email" placeholder="Email" id="email" required><br><br>
+    <input type="password" placeholder="Password" id="password" required><br><br>
+    <button type="submit">Login</button>
+  </form>
+  <p>Don't have an account? <a href="#">Register</a></p>
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDi-eKOhhM0iBztwH-lk6xB8G_wCJIANxI",
-  authDomain: "dm-xpress-1f835.firebaseapp.com",
-  projectId: "dm-xpress-1f835",
-  storageBucket: "dm-xpress-1f835.firebasestorage.app",
-  messagingSenderId: "27426777557",
-  appId: "1:27426777557:web:9b89da634b89ee6e55755c",
-  measurementId: "G-VPBTR5RZ32"
-};
+  <!-- Firebase Scripts -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+    const firebaseConfig = {
+      apiKey: "AIzaSyDi-eKOhhM0iBztwH-lk6xB8G_wCJIANxI",
+      authDomain: "dm-xpress-1f835.firebaseapp.com",
+      projectId: "dm-xpress-1f835",
+      storageBucket: "dm-xpress-1f835.firebasestorage.app",
+      messagingSenderId: "27426777557",
+      appId: "1:27426777557:web:9b89da634b89ee6e55755c",
+      measurementId: "G-VPBTR5RZ32"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    document.getElementById("loginForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          alert("Login successful!");
+          window.location.href = "hub.html";
+        })
+        .catch((error) => {
+          alert("Login failed: " + error.message);
+        });
+    });
+  </script>
+</body>
+</html>
