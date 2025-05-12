@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Status Update | DM Xpress</title>
+  <style>
+    .timeline {
+      max-width: 500px;
+      margin: 2em auto;
+      text-align: left;
+    }
+    .step {
+      border-left: 4px solid orange;
+      padding-left: 10px;
+      margin-bottom: 1em;
+    }
+    .step time {
+      color: #888;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body style="font-family:sans-serif; padding:2em; text-align:center;">
+  <h2>🔐 Admin: Update Package Status</h2>
+  <div id="authArea">
+    <p>Checking access...</p>
+  </div>
+
+  <div id="adminArea" style="display:none;">
+    <br><br>
+    <button onclick="logout()">🚪 Logout</button>
+
+    <form id="findForm">
+      <input type="text" placeholder="Enter Tracking Code" id="trackCode" required><br><br>
+      <button type="submit">Find Package</button>
+    </form>
+
+    <div id="result" style="display:none;">
+      <h3>📦 Status History</h3>
+      <div class="timeline" id="statusTimeline"></div>
+      <h4>➕ Add New Status</h4>
+      <input type="text" placeholder="Enter new status (e.g., In Transit)" id="newStatus"><br><br>
+      <button onclick="addStatus()">Add Status</button>
+    </div>
+
+    <div id="notFound" style="color:red; display:none;">
+      ❌ Package not found.
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js">
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "login.html";
+      });
+    }
+
+</script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js">
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "login.html";
+      });
+    }
+
+</script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js">
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "login.html";
+      });
+    }
+
+</script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDi-eKOhhM0iBztwH-lk6xB8G_wCJIANxI",
+      authDomain: "dm-xpress-1f835.firebaseapp.com",
+      projectId: "dm-xpress-1f835",
+      storageBucket: "dm-xpress-1f835.firebasestorage.app",
+      messagingSenderId: "27426777557",
+      appId: "1:27426777557:web:9b89da634b89ee6e55755c",
+      measurementId: "G-VPBTR5RZ32"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    let docId = null;
+    let currentStatus = [];
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        db.collection("users").doc(user.uid).get().then(doc => {
+          if (doc.exists && doc.data().role === "admin") {
+            document.getElementById("authArea").style.display = "none";
+            document.getElementById("adminArea").style.display = "block";
+          } else {
+            document.getElementById("authArea").innerHTML = "❌ Access denied. Not an admin.";
+          }
+        });
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    document.getElementById("findForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const code = document.getElementById("trackCode").value.trim();
+      document.getElementById("statusTimeline").innerHTML = "";
+      document.getElementById("result").style.display = "none";
+      document.getElementById("notFound").style.display = "none";
+
+      db.collection("packages").where("trackingCode", "==", code).get()
+        .then(snapshot => {
+          if (snapshot.empty) {
+            document.getElementById("notFound").style.display = "block";
+          } else {
+            snapshot.forEach(doc => {
+              docId = doc.id;
+              const data = doc.data();
+              currentStatus = data.statusUpdates || [];
+
+              currentStatus.forEach(update => {
+                const step = document.createElement("div");
+                step.className = "step";
+                step.innerHTML = `<strong>${update.step}</strong><br><time>${new Date(update.timestamp.seconds * 1000).toLocaleString()}</time>`;
+                document.getElementById("statusTimeline").appendChild(step);
+              });
+
+              document.getElementById("result").style.display = "block";
+            });
+          }
+        })
+        .catch(err => {
+          alert("Error: " + err.message);
+        });
+    });
+
+    function addStatus() {
+      const newStep = document.getElementById("newStatus").value.trim();
+      if (!newStep || !docId) return alert("Please enter a valid status and search for a package first.");
+
+      const newUpdate = {
+        step: newStep,
+        timestamp: firebase.firestore.Timestamp.fromDate(new Date())
+      };
+
+      const updatedStatus = [...currentStatus, newUpdate];
+
+      db.collection("packages").doc(docId).update({
+        statusUpdates: updatedStatus
+      }).then(() => {
+        alert("Status updated!");
+        location.reload();
+      }).catch(err => {
+        alert("Error updating status: " + err.message);
+      });
+    }
+  
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "login.html";
+      });
+    }
+
+</script>
+</body>
+</html>
