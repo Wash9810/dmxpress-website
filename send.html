@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Send Package | DM Xpress</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f7f7f7;
+      padding: 2em;
+      text-align: center;
+    }
+    .form {
+      background: white;
+      padding: 2em;
+      max-width: 500px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    input, button {
+      padding: 10px;
+      width: 90%;
+      margin: 10px auto;
+      font-size: 1em;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="form">
+    <h2>📦 Send a Package</h2>
+    <input type="text" id="desc" placeholder="Package Description" required><br>
+    <input type="number" id="weight" placeholder="Weight (lbs)" required><br>
+    <input type="text" id="dest" placeholder="Destination Country" required><br>
+    <input type="tel" id="phone" placeholder="Phone Number (e.g. +1234567890)" required><br>
+    <button onclick="calculateCost()">Calculate Cost</button>
+
+    <div id="costDetails" style="display:none;">
+      <h3>💰 Cost Details</h3>
+      <p id="baseCost"></p>
+      <p id="tax"></p>
+      <p id="total"></p>
+
+      <div id="paymentOptions">
+        <h3>💳 Choose Payment Method</h3>
+        <button onclick="payWithStripe()">Pay with Stripe</button>
+        <div id="paypal-button-container" style="margin-top: 1em;"></div>
+      </div>
+      <div class="success" id="paidNotice" style="display:none;">
+        ✅ Payment complete! You may now submit your package.
+      </div>
+      <button id="submitPackageBtn" disabled onclick="makePayment()">Submit Package</button>
+    </div>
+  </div>
+
+  <script>
+    let finalTotal = 0;
+
+    function calculateCost() {
+      const weight = parseFloat(document.getElementById("weight").value);
+      if (isNaN(weight) || weight <= 0) {
+        alert("Please enter a valid weight.");
+        return;
+      }
+
+      const baseRate = 5.0;
+      const fee = 3.0;
+      const taxRate = 0.08;
+
+      const subtotal = weight * baseRate + fee;
+      const tax = subtotal * taxRate;
+      finalTotal = subtotal + tax;
+
+      document.getElementById("baseCost").innerText = "Base + Fee: $" + subtotal.toFixed(2);
+      document.getElementById("tax").innerText = "Tax (8%): $" + tax.toFixed(2);
+      document.getElementById("total").innerText = "Total: $" + finalTotal.toFixed(2);
+
+      document.getElementById("costDetails").style.display = "block";
+
+      if (window.paypal) {
+        paypal.Buttons({
+          createOrder: function(data, actions) {
+            return actions.order.create({
+              purchase_units: [{
+                amount: { value: finalTotal.toFixed(2) }
+              }]
+            });
+          },
+          onApprove: function(data, actions) {
+            return actions.order.capture().then(function(details) {
+              alert("Payment completed by " + details.payer.name.given_name);
+              document.getElementById("submitPackageBtn").disabled = false;
+              document.getElementById("paidNotice").style.display = "block";
+            });
+          }
+        }).render("#paypal-button-container");
+      }
+    }
+
+    function payWithStripe() {
+      alert("Simulated Stripe payment. Unlocking submit.");
+      document.getElementById("submitPackageBtn").disabled = false;
+      document.getElementById("paidNotice").style.display = "block";
+    }
+
+    function makePayment() {
+      alert("✅ Package submitted! Tracking Code: DMX6165383367");
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://www.paypal.com/sdk/js?client-id=P5UWZH8Q5A8J4&currency=USD&intent=capture";
+    document.head.appendChild(script);
+  </script>
+</body>
+</html>
