@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard | DM Xpress</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 2em; }
+    .section { border: 1px solid #ccc; border-radius: 10px; padding: 1em; margin-bottom: 2em; max-width: 600px; margin-left: auto; margin-right: auto; }
+    input, button { padding: 10px; width: 80%; margin: 10px 0; }
+    h2 { color: orange; }
+  </style>
+</head>
+<body>
+  <h1>📦 Admin Dashboard</h1>
+
+  <div class="section">
+    <h2>🔗 Quick Access</h2>
+    <a href="admin.html"><button>Update Package Status</button></a><br>
+    <a href="create-admin.html"><button>Create New Admin</button></a>
+  </div>
+
+  <div class="section">
+    <h2>📋 Assign Task to Staff</h2>
+    <form id="taskForm">
+      <input type="text" id="staffName" placeholder="Staff Name" required><br>
+      <input type="text" id="taskDesc" placeholder="Task Description" required><br>
+      <button type="submit">Assign Task</button>
+    </form>
+    <p id="taskStatus"></p>
+  </div>
+
+  <div class="section">
+    <h2>📦 Package Pickup & Delivery</h2>
+    
+    <form id="pickupForm">
+      <input type="text" id="pickupCodeTrack" placeholder="Enter Tracking Code" required><br>
+      <input type="text" id="pickupCodeInput" placeholder="Enter Pickup Code" required><br>
+      <button type="submit">Mark as Picked Up</button>
+    </form>
+
+      <input type="text" id="pickupCode" placeholder="Enter Tracking Code" required><br>
+      <button type="submit">Mark as Picked Up</button>
+    </form>
+
+    <form id="deliveryForm">
+      <input type="text" id="deliveryCode" placeholder="Enter Tracking Code" required><br>
+      <input type="text" id="confirmCode" placeholder="Enter Delivery Code" required><br>
+      <button type="submit">Confirm Delivery</button>
+    </form>
+    <p id="packageStatus"></p>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDi-eKOhhM0iBztwH-lk6xB8G_wCJIANxI",
+      authDomain: "dm-xpress-1f835.firebaseapp.com",
+      projectId: "dm-xpress-1f835",
+      storageBucket: "dm-xpress-1f835.firebasestorage.app",
+      messagingSenderId: "27426777557",
+      appId: "1:27426777557:web:9b89da634b89ee6e55755c",
+      measurementId: "G-VPBTR5RZ32"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Assign task
+    document.getElementById("taskForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const name = document.getElementById("staffName").value.trim();
+      const desc = document.getElementById("taskDesc").value.trim();
+      db.collection("tasks").add({
+        staff: name,
+        description: desc,
+        assignedAt: firebase.firestore.Timestamp.now()
+      }).then(() => {
+        document.getElementById("taskStatus").innerText = "✅ Task assigned!";
+      }).catch(err => {
+        document.getElementById("taskStatus").innerText = "❌ Error: " + err.message;
+      });
+    });
+
+    // Mark as picked up with code
+    document.getElementById("pickupForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const code = document.getElementById("pickupCode").value.trim();
+      // Mark as picked up with code
+    document.getElementById("pickupForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const code = document.getElementById("pickupCodeTrack").value.trim();
+      const pickupCode = document.getElementById("pickupCodeInput").value.trim();
+
+      db.collection("packages").where("trackingCode", "==", code).get()
+        .then(snapshot => {
+          if (!snapshot.empty) {
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              if (data.pickupCode === pickupCode) {
+                db.collection("packages").doc(doc.id).update({
+                  pickedUp: true,
+                  pickedUpAt: firebase.firestore.Timestamp.now()
+                });
+                document.getElementById("packageStatus").innerText = "✅ Package marked as picked up.";
+              } else {
+                document.getElementById("packageStatus").innerText = "❌ Incorrect pickup code.";
+              }
+            });
+          } else {
+            document.getElementById("packageStatus").innerText = "❌ Tracking code not found.";
+          }
+        });
+    });
+          if (!snapshot.empty) {
+            snapshot.forEach(doc => {
+              db.collection("packages").doc(doc.id).update({
+                pickedUp: true
+              });
+            });
+            document.getElementById("packageStatus").innerText = "✅ Package marked as picked up.";
+          } else {
+            document.getElementById("packageStatus").innerText = "❌ Tracking code not found.";
+          }
+        });
+    });
+
+    // Confirm delivery
+    document.getElementById("deliveryForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const code = document.getElementById("deliveryCode").value.trim();
+      const confirmCode = document.getElementById("confirmCode").value.trim();
+      // Mark as picked up with code
+    document.getElementById("pickupForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const code = document.getElementById("pickupCodeTrack").value.trim();
+      const pickupCode = document.getElementById("pickupCodeInput").value.trim();
+
+      db.collection("packages").where("trackingCode", "==", code).get()
+        .then(snapshot => {
+          if (!snapshot.empty) {
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              if (data.pickupCode === pickupCode) {
+                db.collection("packages").doc(doc.id).update({
+                  pickedUp: true,
+                  pickedUpAt: firebase.firestore.Timestamp.now()
+                });
+                document.getElementById("packageStatus").innerText = "✅ Package marked as picked up.";
+              } else {
+                document.getElementById("packageStatus").innerText = "❌ Incorrect pickup code.";
+              }
+            });
+          } else {
+            document.getElementById("packageStatus").innerText = "❌ Tracking code not found.";
+          }
+        });
+    });
+          if (!snapshot.empty) {
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              if (data.deliveryCode === confirmCode) {
+                db.collection("packages").doc(doc.id).update({
+                  delivered: true,
+                  deliveredAt: firebase.firestore.Timestamp.now()
+                });
+                document.getElementById("packageStatus").innerText = "✅ Package marked as delivered.";
+              } else {
+                document.getElementById("packageStatus").innerText = "❌ Incorrect delivery code.";
+              }
+            });
+          } else {
+            document.getElementById("packageStatus").innerText = "❌ Tracking code not found.";
+          }
+        });
+    });
+  </script>
+</body>
+</html>
