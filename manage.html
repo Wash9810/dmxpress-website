@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage My Package | DM Xpress</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; text-align: center; background: #f7f7f7; }
+    .box { background: white; padding: 2em; max-width: 500px; margin: auto; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
+    input, button { padding: 10px; width: 90%; margin: 10px auto; font-size: 1em; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>🔍 Manage My Package</h2>
+    <input type="text" id="trackCode" placeholder="Enter your tracking code"><br>
+    <button onclick="findPackage()">Find Package</button>
+
+    <div id="packageDetails" style="display:none;">
+      <h3>📦 Package Details</h3>
+      <input type="text" id="desc" placeholder="Description"><br>
+      <input type="number" id="weight" placeholder="Weight (lbs)"><br>
+      <input type="text" id="dest" placeholder="Destination"><br>
+      <input type="tel" id="phone" placeholder="Phone"><br>
+      <button onclick="updatePackage()">Update Package</button><br>
+      <button onclick="cancelPackage()" style="color:white; background:red;">Cancel Package</button>
+      <p id="statusMsg"></p>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDi-eKOhhM0iBztwH-lk6xB8G_wCJIANxI",
+      authDomain: "dm-xpress-1f835.firebaseapp.com",
+      projectId: "dm-xpress-1f835",
+      storageBucket: "dm-xpress-1f835.firebasestorage.app",
+      messagingSenderId: "27426777557",
+      appId: "1:27426777557:web:9b89da634b89ee6e55755c",
+      measurementId: "G-VPBTR5RZ32"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    let docId = null;
+
+    function findPackage() {
+      const code = document.getElementById("trackCode").value.trim();
+      db.collection("packages").where("trackingCode", "==", code).get().then(snapshot => {
+        if (!snapshot.empty) {
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.pickedUp) {
+              alert("This package has already been picked up and cannot be edited.");
+              return;
+            }
+            docId = doc.id;
+            document.getElementById("desc").value = data.description || "";
+            document.getElementById("weight").value = data.weight || "";
+            document.getElementById("dest").value = data.destination || "";
+            document.getElementById("phone").value = data.phone || "";
+            document.getElementById("packageDetails").style.display = "block";
+          });
+        } else {
+          alert("Tracking code not found.");
+        }
+      }).catch(err => {
+        alert("Error: " + err.message);
+      });
+    }
+
+    function updatePackage() {
+      const desc = document.getElementById("desc").value;
+      const weight = parseFloat(document.getElementById("weight").value);
+      const dest = document.getElementById("dest").value;
+      const phone = document.getElementById("phone").value;
+
+      db.collection("packages").doc(docId).update({
+        description: desc,
+        weight: weight,
+        destination: dest,
+        phone: phone
+      }).then(() => {
+        document.getElementById("statusMsg").innerText = "✅ Package updated successfully.";
+      }).catch(err => {
+        document.getElementById("statusMsg").innerText = "❌ Error: " + err.message;
+      });
+    }
+
+    function cancelPackage() {
+      if (confirm("Are you sure you want to cancel this package?")) {
+        db.collection("packages").doc(docId).update({
+          cancelled: true
+        }).then(() => {
+          document.getElementById("statusMsg").innerText = "❌ Package has been cancelled.";
+        }).catch(err => {
+          document.getElementById("statusMsg").innerText = "❌ Error: " + err.message;
+        });
+      }
+    }
+  </script>
+</body>
+</html>
