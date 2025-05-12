@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Staff Dashboard | DM Xpress</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 2em; background: #f2f2f2; }
+    .box { background: white; padding: 2em; max-width: 600px; margin: auto; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
+    table { width: 100%; margin-top: 1em; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #ffa500; color: white; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>👤 Staff Task View</h2>
+    <p id="status">Authenticating...</p>
+    <div id="taskSection" style="display:none;">
+      <h3>Your Assigned Tasks</h3>
+      <table id="taskTable">
+        <thead><tr><th>Task</th><th>Date</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDi-eKOhhM0iBztwH-lk6xB8G_wCJIANxI",
+      authDomain: "dm-xpress-1f835.firebaseapp.com",
+      projectId: "dm-xpress-1f835",
+      storageBucket: "dm-xpress-1f835.firebasestorage.app",
+      messagingSenderId: "27426777557",
+      appId: "1:27426777557:web:9b89da634b89ee6e55755c",
+      measurementId: "G-VPBTR5RZ32"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        db.collection("users").doc(user.uid).get().then(doc => {
+          if (doc.exists && doc.data().role === "staff") {
+            const name = doc.data().email || "Staff";
+            document.getElementById("status").innerText = `Welcome, ${name}`;
+            loadTasks(name);
+          } else {
+            document.getElementById("status").innerText = "❌ Access denied. Not a staff account.";
+          }
+        });
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    function loadTasks(staffName) {
+      db.collection("tasks").where("staff", "==", staffName).orderBy("assignedAt", "desc").get()
+        .then(snapshot => {
+          const tbody = document.getElementById("taskTable").querySelector("tbody");
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const row = `<tr><td>${data.description}</td><td>${data.assignedAt.toDate().toLocaleString()}</td></tr>`;
+            tbody.innerHTML += row;
+          });
+          document.getElementById("taskSection").style.display = "block";
+        });
+    }
+  </script>
+</body>
+</html>
