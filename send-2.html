@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Send Package | DM Xpress</title>
+</head>
+<body style="font-family:sans-serif;text-align:center;padding:2em;">
+  <h2>📤 Send a Package</h2>
+  <form id="packageForm">
+    <input type="text" placeholder="Package Description" id="desc" required><br><br>
+    <input type="number" placeholder="Weight (lbs)" id="weight" required><br><br>
+    <input type="text" placeholder="Destination Country" id="dest" required><br><br>
+    <button type="button" onclick="calculateCost()">Calculate Cost</button>
+  </form>
+
+  <div id="costDetails" style="margin-top:2em; display:none;">
+    <h3>💰 Cost Breakdown</h3>
+    <p id="baseCost"></p>
+    <p id="tax"></p>
+    <p id="total"></p>
+    <button onclick="makePayment()">Pay Now</button>
+  </div>
+
+  <div id="result" style="margin-top:2em; display:none;">
+    <h3>✅ Payment Received!</h3>
+    <p><strong>Your Tracking Code:</strong> DMX7467355543</p>
+    <img src="tracking_qr.png" alt="QR Code" width="200" height="200" />
+  </div>
+
+  <script>
+    function calculateCost() {
+      const weight = parseFloat(document.getElementById("weight").value);
+      if (isNaN(weight) || weight <= 0) {
+        alert("Please enter a valid weight.");
+        return;
+      }
+
+      const baseRate = 5.0; // cost per lb
+      const fee = 3.0;      // service fee
+      const taxRate = 0.08; // tax rate
+
+      const subtotal = weight * baseRate + fee;
+      const tax = subtotal * taxRate;
+      const total = subtotal + tax;
+
+      document.getElementById("baseCost").innerText = "📦 Base Cost + Fee: $" + subtotal.toFixed(2);
+      document.getElementById("tax").innerText = "🧾 Tax (8%): $" + tax.toFixed(2);
+      document.getElementById("total").innerText = "💳 Total Amount Due: $" + total.toFixed(2);
+
+      document.getElementById("costDetails").style.display = "block";
+    }
+
+    function makePayment() {
+      document.getElementById("result").style.display = "block";
+      document.getElementById("costDetails").style.display = "none";
+    }
+  </script>
+</body>
+</html>
